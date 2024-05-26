@@ -1,11 +1,11 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { GameEntity } from './entities/game.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game-dto';
 
@@ -27,6 +27,11 @@ export class GameService {
 
   async createGame(input: CreateGameDto): Promise<GameEntity> {
     const { title, description } = input;
+    if (await this.em.findOneBy(GameEntity, { title })) {
+      throw new ConflictException(
+        `The person with name: ${title} - already exists`,
+      );
+    }
 
     const game = this.em.create(GameEntity, { title, description });
     return await this.em.save(game);
